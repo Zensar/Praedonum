@@ -45,7 +45,11 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Modules\DeadPixel\DeadPixelModule.cs" />
+    <Compile Include="Modules\DeadPixel\Models\Messages.cs" />
     <Compile Include="Modules\DeadPixel\Models\Pixel.cs" />
+    <Compile Include="Observers\ConsoleObserver.cs" />
+    <Compile Include="Observers\IObservable.cs" />
+    <Compile Include="Observers\IObserver.cs" />
     <Compile Include="Modules\PraedonumModule.cs" />
     <Compile Include="Modules\Prefix.cs" />
     <Compile Include="Program.cs" />

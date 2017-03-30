@@ -5,32 +5,32 @@ using System.Linq;
 using System.Net;
 using System.Net.Sockets;
 using System.Reflection;
-using System.Runtime.InteropServices;
-using System.Text;
-using System.Threading.Tasks;
 using Praedonum.Modules;
+using Praedonum.Observers;
 
 namespace Praedonum
 {
     class Program
     {
         private static IDictionary<string, PraedonumModule> _modules;
+        private static IDictionary<string, IObserver> _observers;
 
         static void Main(string[] args)
         {
-            var prefix = BuildRootPrefix(args);
             _modules = RegisterModules();
+            _observers = RegisterObservers(_modules.Values.ToList());
 
+            //Create a server and listen on the presented prefixes
             HttpListener listener = new HttpListener();
 
             foreach (var module in _modules.Values)
             {
-                listener.Prefixes.Add(String.Format("{0}{1}/", prefix, module.Name));
+                listener.Prefixes.Add(String.Format("http://{0}:{1}/{2}/", GetLocalIpAddress(), 3389, module.Name));
             }
 
             listener.Start();
 
-            Console.WriteLine("Praedonum is active through - '" + prefix + "{moduleName}'");
+            Console.WriteLine("Praedonum is active!");
             Console.WriteLine("-------------------");
             Console.WriteLine();
             Console.WriteLine("Here are the list of modules that are available:");
@@ -44,6 +44,7 @@ namespace Praedonum
             Console.WriteLine();
             Console.WriteLine("-------------------");
             Console.WriteLine("Press ESC to stop");
+
             do
             {
                 while (!Console.KeyAvailable)
@@ -69,6 +70,28 @@ namespace Praedonum
             return modules;
         }
 
+        private static IDictionary<string, IObserver> RegisterObservers(IList<PraedonumModule> observables)
+        {
+            IDictionary<string, IObserver> observers = new ConcurrentDictionary<string, IObserver>();
+
+            foreach (Type type in Assembly.GetAssembly(typeof(IObserver)).GetTypes().Where(myType => typeof(IObserver).IsAssignableFrom(myType) && !myType.IsInterface))
+            {
+                IObserver observer = (IObserver)Activator.CreateInstance(type);
+
+                foreach (var observable in observables)
+                {
+                    if (observable is IObservable)
+                    {
+                        ((IObservable)observable).Attach(observer);
+                    }
+                }
+
+                observers[type.Name] = observer;
+            }
+
+            return observers;
+        }
+
         public static void ListenerCallback(IAsyncResult result)
         {
             HttpListener listener = (HttpListener) result.AsyncState;
@@ -91,17 +114,7 @@ namespace Praedonum
             context.Response.Close();
         }
 
-        public static Prefix BuildRootPrefix(string[] args)
-        {
-            var prefix = new Prefix();
-            prefix.Protocol = "http";
-            prefix.Host = GetLocalIPAddress();
-            prefix.Port = 3389;
-
-            return prefix;
-        }
-
-        public static string GetLocalIPAddress()
+        public static string GetLocalIpAddress()
         {
             var host = Dns.GetHostEntry(Dns.GetHostName());
 

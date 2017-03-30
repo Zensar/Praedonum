@@ -2,14 +2,13 @@
 using System.Collections.Generic;
 using System.Drawing;
 using System.Net;
-using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices;
 using System.Timers;
 using Praedonum.Modules.DeadPixel.Models;
+using Praedonum.Observers;
 
 namespace Praedonum.Modules.DeadPixel
 {
-    public class DeadPixelModule : PraedonumModule
+    public class DeadPixelModule : PraedonumModule, IObservable
     {
         #region Fields
 
@@ -28,12 +27,54 @@ namespace Praedonum.Modules.DeadPixel
 
         #endregion
 
+        #region Properties
+
+        public override string Name => typeof(DeadPixelModule).Name;
+
+        public IList<IObserver> Observers { get; set; }
+
+        #endregion
+
+        #region Constructor / Destructor
+
         public DeadPixelModule()
         {
             _pixels = new List<Pixel>();
+            Observers = new List<IObserver>();
         }
 
-        public override string Name => typeof(DeadPixelModule).Name; 
+        #endregion
+
+        #region Functions
+
+        #region IObservable Implementation
+
+
+        public void Attach(IObserver observer)
+        {
+            if (!Observers.Contains(observer))
+            {
+                Observers.Add(observer);
+            }
+        }
+
+        public void Detach(IObserver observer)
+        {
+            if (Observers.Contains(observer))
+            {
+                Observers.Remove(observer);
+            }
+        }
+
+        private void Notify(string message)
+        {
+            foreach (var observer in Observers)
+            {
+                observer.Update(message);
+            }
+        }
+
+        #endregion
 
         public override void Execute(HttpListenerRequest request, HttpListenerResponse response)
         {
@@ -60,10 +101,13 @@ namespace Praedonum.Modules.DeadPixel
             {
                 if (_timer == null)
                 {
-                    Console.WriteLine();
-                    Console.WriteLine("Starting dead pixel!");
+                    Notify(Messages.DeadPixelActivatedMessage);
                     SetTimer();
-                    _pixels.Add(Pixel.CreateRandomPixel(_color, new Tuple<int, int>(_startX, _endX), new Tuple<int, int>(_startY, _endY), _size));
+
+                    var pixel = Pixel.CreateRandomPixel(_color, new Tuple<int, int>(_startX, _endX), new Tuple<int, int>(_startY, _endY), _size);
+
+                    _pixels.Add(pixel);
+                    Notify(Messages.GetDeadPixelProgressMessage(pixel));
                 }
             }
 
@@ -71,8 +115,8 @@ namespace Praedonum.Modules.DeadPixel
             {
                 if (_timer != null)
                 {
-                    Console.WriteLine();
-                    Console.WriteLine("Ending dead pixel!");
+                    
+                    Notify(Messages.DeadPixelDeactivatedMessage);
                     _timer.Stop();
                     _timer.Dispose();
                     _timer = null;
@@ -88,9 +132,12 @@ namespace Praedonum.Modules.DeadPixel
 
         private void SetTimer()
         {
+            //Set initial timer start
             _start = DateTime.Now;
+
             // Create a timer with a two second interval.
             _timer = new System.Timers.Timer(1);
+
             // Hook up the Elapsed event for the timer. 
             _timer.Elapsed += OnTimedDrawEvent;
             _timer.AutoReset = true;
@@ -125,7 +172,9 @@ namespace Praedonum.Modules.DeadPixel
 
             if (interval > _last)
             {
-                _pixels.Add(Pixel.CreateRandomPixel(_color, new Tuple<int, int>(_startX, _endX), new Tuple<int, int>(_startY, _endY), _size));
+                var pixel = Pixel.CreateRandomPixel(_color, new Tuple<int, int>(_startX, _endX), new Tuple<int, int>(_startY, _endY), _size);
+                _pixels.Add(pixel);
+                Notify(Messages.GetDeadPixelProgressMessage(pixel));
                 _last = interval;
             }
         }
@@ -140,5 +189,7 @@ namespace Praedonum.Modules.DeadPixel
                 p.Draw();
             }
         }
+
+        #endregion
     }
 }
