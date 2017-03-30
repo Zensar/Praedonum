@@ -24,6 +24,7 @@ namespace Praedonum.Modules.DeadPixel
         private int _size;
         private int _speed;
         private int _last = 0;
+        private Color _color = Color.Black;
 
         #endregion
 
@@ -48,6 +49,7 @@ namespace Praedonum.Modules.DeadPixel
             int.TryParse(request.QueryString["endY"], out _endY);
             int.TryParse(request.QueryString["size"], out _size);
             int.TryParse(request.QueryString["speed"], out _speed);
+            _color = Color.FromName(request.QueryString["color"]);
 
             _endX = _endX > 0 ? _endX : 1920;
             _endY = _endY > 0 ? _endY : 1080;
@@ -61,7 +63,7 @@ namespace Praedonum.Modules.DeadPixel
                     Console.WriteLine();
                     Console.WriteLine("Starting dead pixel!");
                     SetTimer();
-                    _pixels.Add(Pixel.CreateRandomPixel(new Tuple<int, int>(_startX, _endX), new Tuple<int, int>(_startY, _endY), _size));
+                    _pixels.Add(Pixel.CreateRandomPixel(_color, new Tuple<int, int>(_startX, _endX), new Tuple<int, int>(_startY, _endY), _size));
                 }
             }
 
@@ -103,12 +105,12 @@ namespace Praedonum.Modules.DeadPixel
         /// <param name="e">Elapsed time</param>
         private void OnTimedDrawEvent(Object source, ElapsedEventArgs e)
         {
-            _timer.Stop();
+            _timer?.Stop();
 
             AddRandomPixel(e.SignalTime);
             DrawRandomPixels();
 
-            _timer.Start();
+            _timer?.Start();
         }
 
         /// <summary>
@@ -123,7 +125,7 @@ namespace Praedonum.Modules.DeadPixel
 
             if (interval > _last)
             {
-                _pixels.Add(Pixel.CreateRandomPixel(new Tuple<int, int>(_startX, _endX), new Tuple<int, int>(_startY, _endY), _size));
+                _pixels.Add(Pixel.CreateRandomPixel(_color, new Tuple<int, int>(_startX, _endX), new Tuple<int, int>(_startY, _endY), _size));
                 _last = interval;
             }
         }

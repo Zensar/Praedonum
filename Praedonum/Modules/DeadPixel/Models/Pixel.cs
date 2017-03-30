@@ -40,9 +40,9 @@ namespace Praedonum.Modules.DeadPixel.Models
         /// <param name="x">Screen position on the x-axis</param>
         /// <param name="y">Screen position on the y-axis</param>
         /// <param name="size">Square size of the pixel</param>
-        public static Pixel CreatePixel(int x, int y, int size)
+        public static Pixel CreatePixel(Color color, int x, int y, int size)
         {
-            return new Pixel(Brushes.Black, x, y, size, size);
+            return new Pixel(new SolidBrush(color), x, y, size, size);
         }
 
         /// <summary>
@@ -51,10 +51,10 @@ namespace Praedonum.Modules.DeadPixel.Models
         /// <param name="rangeX">Tuple range of x-axis values</param>
         /// <param name="rangeY">Tuple range of y-axis values</param>
         /// <param name="size">Square size of the pixel</param>
-        public static Pixel CreateRandomPixel(Tuple<int, int> rangeX, Tuple<int, int> rangeY, int size)
+        public static Pixel CreateRandomPixel(Color color, Tuple<int, int> rangeX, Tuple<int, int> rangeY, int size)
         {
             Random random = new Random(Guid.NewGuid().GetHashCode());
-            return new Pixel(Brushes.Black, random.Next(rangeX.Item1, rangeX.Item2), random.Next(rangeY.Item1, rangeY.Item2), size, size);
+            return new Pixel(new SolidBrush(color), random.Next(rangeX.Item1, rangeX.Item2), random.Next(rangeY.Item1, rangeY.Item2), size, size);
         }
 
         #endregion
