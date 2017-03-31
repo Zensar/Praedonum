@@ -47,12 +47,9 @@ namespace Praedonum
 
             do
             {
-                while (!Console.KeyAvailable)
-                {
-                    var result = listener.BeginGetContext(new AsyncCallback(ListenerCallback), listener);
-                    result.AsyncWaitHandle.WaitOne();
-                }
-            } while (Console.ReadKey(true).Key != ConsoleKey.Escape);
+                var result = listener.BeginGetContext(new AsyncCallback(ListenerCallback), listener);
+                result.AsyncWaitHandle.WaitOne();
+            } while (true);
         }
 
         private static IDictionary<string, PraedonumModule> RegisterModules()
@@ -64,7 +61,7 @@ namespace Praedonum
                     .Where(
                         myType => myType.IsClass && !myType.IsAbstract && myType.IsSubclassOf(typeof(PraedonumModule))))
             {
-                modules[type.Name] = (PraedonumModule) Activator.CreateInstance(type);
+                modules[type.Name] = (PraedonumModule)Activator.CreateInstance(type);
             }
 
             return modules;
@@ -94,7 +91,7 @@ namespace Praedonum
 
         public static void ListenerCallback(IAsyncResult result)
         {
-            HttpListener listener = (HttpListener) result.AsyncState;
+            HttpListener listener = (HttpListener)result.AsyncState;
             // Call EndGetContext to complete the asynchronous operation.
             HttpListenerContext context = listener.EndGetContext(result);
 
